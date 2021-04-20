@@ -20,13 +20,13 @@ all_zip_files = glob.glob("data/customs_ru_raw/*.zip")
 for file in all_zip_files:
     # Unzip
     shutil.unpack_archive(file, "data/temp", "zip")
-    new_file_name = "data/temp/" +\
-                    file.removeprefix("data/customs_ru_raw\\").removesuffix(".zip") +\
-                    ".dbf"
-    os.rename("data/temp/DATTSVT.dbf", new_file_name)
 
     # Read dbf to DataFrame
-    df = Dbf5(new_file_name, codec="CP866").to_dataframe()
+    df = Dbf5("data/temp/DATTSVT.dbf", codec="CP866").to_dataframe()
+
+    # Delete already readed file
+    os.remove("data/temp/DATTSVT.dbf")
+
     # Rename columns
     df = df.rename(columns={"Stoim": "usd",
                        "Netto": "kg",
@@ -48,5 +48,7 @@ for file in all_zip_files:
     # Create connection
     con = sqlite3.connect("data/impex.sqlite")
     df.to_sql(name="impex", con=con,  if_exists="append")
+
+    # create index impex_napr on impex (napr)
 
 con.close()
